@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        div {
+            break-inside: avoid;
+        }
+    </style>
+  <head>
+    <meta charset="utf-8">
+    <link id="theme" rel="stylesheet" href="Themes/AlpineValley.css">
+    <title>Sentence Shifter</title>
+  </head>
+  <body style="column-count: 2;">
+      <div id="buttonDivContainer" class="btnDiv"></div>
+      <div>
+          <!--I don't know why the line bellow is showing an error-->
+          <input type="file" id="lineFinder" webkitdirectory multiple /><br>
+          <select id="characterSelect">
+              <option value="" selected disabled id="noChar">Please load character files</option>
+          </select><br>
+      </div>
+      <div id="charPic">
+          
+      </div>
+      <div id="DebugConsole">
+          <button onclick="debug('LDA')">Line Dest Array</button>
+          <button onclick="debug('characterArray')">Character Array</button>
+      </div>
+  </body>
+  <script>
+      const allDest = [];
+      const characters = [];
+      const characterLines = [];
+      var butnDiv = document.getElementById("buttonDivContainer");
+      
+      document.getElementById("lineFinder").addEventListener("change", (event) => {
+          butnDiv.replaceChildren();
+          for (const file of event.target.files) {
+              allDest.push(file);
+          }
+          for (const dest of allDest) {
+              const segmts = dest.webkitRelativePath.split("/");
+              const character = segmts[1];
+              if (segmts[0] === "characters" && character && !characters.includes(character)) {
+                  characters.push(segmts[1]);
+              }
+          }
+          var charSel = document.getElementById("characterSelect");
+          for (var i = 0; i < characters.length; i++) {
+              var opt = document.createElement('option');
+              opt.value = i;
+              opt.innerHTML = characters[i];
+              charSel.appendChild(opt);
+          }
+          charSel.options[0].textContent = "Select a character";
+      });
+      document.getElementById('characterSelect').addEventListener("change", (event) => {
+          butnDiv.replaceChildren();
+          const lines = [];
+          const wordClasses = [];
+          const char = characters[event.target.value];
+          
+          for (const dest of allDest) {
+              const seg = dest.webkitRelativePath.split("/");
+              if (seg[1] === char && seg[3] && seg[4] && !wordClasses.includes(seg[3])) {
+                  wordClasses.push(seg[3]);
+                  
+                  const div = document.createElement('div');
+                  div.id = seg[3];
+                  div.className = "buttonDiv";
+                  
+                  const header = document.createElement("h2");
+                  header.style.textAlign = "center";
+                  header.textContent = seg[3];
+                  
+                  div.appendChild(header);
+                  butnDiv.appendChild(div);
+              }
+              if (seg[1] === char && seg[2] === "lines" && seg[4]) {
+                  const wordDiv = document.getElementById(seg[3]);
+                  const btn = document.createElement('button');
+                  btn.addEventListener('mouseenter', function () {
+                      playClip(seg[1], seg[3], seg[4]);
+                  });
+                  btn.innerText = seg[4];
+                  wordDiv.appendChild(btn);
+              }
+          }
+      });
+          
+      let currAudio = null;
+      
+      function playClip(characterName, wordClass, clipName) {
+          if (currAudio) {
+              currAudio.pause();
+              currAudio.currentTime = 0;
+          }
+          
+          const audioDest = "characters/" + characterName + "/lines/" + wordClass+ "/" + clipName;
+          currAudio = new Audio(audioDest);
+          currAudio.play();
+      }
+      
+      function debug(test) {
+          switch(test) {
+              case "LDA":
+                  console.clear();
+                  console.log("LDA contains " + allDest.length + " entries");
+                  console.log("LDA found: ");
+                  for (let i = 0; i < allDest.length; i++) {
+                      console.log(allDest[i]);
+                  }
+                  break;
+              case "characterArray": 
+                  console.clear();
+                  console.log("characterArray contains: " + characters.length + " characters");
+                  console.log("Found characters: ");
+                  for (let i = 0; i < characters.length; i++) {
+                      console.log(characters[i]);
+                  }
+                  break;
+              default:
+                  console.log("This button was not asigned to a task in the function.");
+          }
+      }
+  </script>
+</html>
